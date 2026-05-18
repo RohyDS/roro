@@ -1,12 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext';
+import DashboardService from '../../service/Admin/Dasboard';
 import { FolderTree, Rocket, Settings, LogOut } from 'lucide-react';
 
 const Dashboard = () => {
     const { logout } = useAuth();
-    const { orders } = useCart();
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                setLoading(true);
+                const data = await DashboardService.getDashboardOrders();
+                setOrders(data);
+            } catch (err) {
+                console.error("Erreur dashboard:", err);
+                setError("Erreur lors du chargement des données.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return <div style={{ padding: '50px', textAlign: 'center' }}>Chargement des données du tableau de bord...</div>;
+    }
+
+    if (error) {
+        return <div style={{ padding: '50px', textAlign: 'center', color: 'red' }}>{error}</div>;
+    }
 
     return (
         <div className="products-container">
