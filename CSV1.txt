@@ -1,0 +1,41 @@
+CATEGORIES
+
+POST http://localhost:8000/api/v1/admin/catalog/categories
+
+{
+    "name": "Mode Homme",
+    "slug": "mode-homme",
+    "position": 1,
+    "status": 1,
+    "display_mode": "products_and_description",
+    "description": "Découvrez notre collection de vêtements et accessoires pour hommes.",
+    "attributes": [11]
+}
+
+POST http://localhost:8000/api/v1/admin/catalog/products
+
+{
+  "type": "simple",
+  "attribute_family_id": 1,
+  "sku": "furniture"
+}
+
+PUT http://localhost:8000/api/v1/admin/catalog/products/id
+{
+    "sku": "furniture",
+    "name": "Mon Super Meuble",
+    "url_key": "mon-super-meuble",
+    "short_description": "Un joli meuble",
+    "description": "Une description complète de votre meuble en bois.",
+    "channel": "default",
+    "locale": "fr",
+    "price": 250.00,
+    "cost": 120.50,
+    "weight": 1.5,
+    "status": 1,
+    "manage_stock": 1, 
+    "inventories": {
+        "1": 50
+    }
+}
+
