@@ -40,4 +40,9 @@ const CustomerService = {
     }
 };
 
+export const getCustomerOrders = async () => {
+    const response = await api.get("v1/customer/orders");
+    return response.data;
+};
+
 export default CustomerService;

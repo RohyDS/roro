@@ -1,6 +1,7 @@
 import api from "../../config/api";
 
 export const getOrders = async () => {
+<<<<<<< HEAD
     try {
         const response = await api.get("v1/admin/sales/orders");
         return response.data;
@@ -72,4 +73,34 @@ export const shipOrder = async (orderId) => {
         console.error(`Erreur lors de l'expédition de la commande ${orderId} :`, error);
         throw error;
     }
+=======
+    const response = await api.get("v1/admin/sales/orders");
+    return response.data;
+};
+
+export const createInvoice = async (orderId) => {
+    const response = await api.post(
+        `v1/admin/sales/invoices/${orderId}`,
+        {
+            invoice: {
+                capture: true
+            }
+        }
+    );
+
+    return response.data;
+};
+
+export const createShipment = async (orderId) => {
+    const response = await api.post(
+        `v1/admin/sales/shipments/${orderId}`,
+        {
+            shipment: {
+                source: "default"
+            }
+        }
+    );
+
+    return response.data;
+>>>>>>> origin/eval1.0
 };

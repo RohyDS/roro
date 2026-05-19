@@ -12,9 +12,9 @@ function App() {
   if (!localStorage.getItem('customer_data')) {
     localStorage.setItem('customer_data', JSON.stringify({
       id: 2,
-      first_name: "Jean",
-      last_name: "Dupont",
-      email: "jean.dupont@gmail.com"
+      first_name: " ",
+      last_name: " ",
+      email: " "
     }));
   }
 

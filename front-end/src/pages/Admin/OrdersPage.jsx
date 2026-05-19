@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
+<<<<<<< HEAD
 import { getOrders, invoiceOrder, shipOrder } from "../../service/Admin/orderService";
+=======
+import {getOrders, createInvoice, createShipment} from "../../service/Admin/orderService";
+>>>>>>> origin/eval1.0
 
 const OrdersPage = () => {
     const [orders, setOrders] = useState([]);
@@ -19,6 +23,7 @@ const OrdersPage = () => {
         }
     };
 
+<<<<<<< HEAD
     const handleInvoice = async (orderId) => {
         setLoadingAction(orderId);
         try {
@@ -69,12 +74,45 @@ const OrdersPage = () => {
                         <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>Total</th>
                         <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>Status</th>
                         <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>Actions</th>
+=======
+    const handleCreateInvoice = async (orderId) => {
+        try {
+            await createInvoice(orderId);
+            fetchOrders();
+        } catch (error) {
+            console.error("Erreur facture :", error);
+        }
+    };
+
+    const handleCreateShipment = async (orderId) => {
+        try {
+            await createShipment(orderId);
+            fetchOrders();
+        } catch (error) {
+            console.error("Erreur expédition :", error);
+        }
+    };
+
+    return (
+        <div>
+            <h2>Liste des commandes</h2>
+
+            <table border="1" cellPadding="10">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Client</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+>>>>>>> origin/eval1.0
                     </tr>
                 </thead>
 
                 <tbody>
                     {orders.map((order) => (
                         <tr key={order.id}>
+<<<<<<< HEAD
                             <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>{order.increment_id}</td>
                             <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>{order.customer_full_name}</td>
                             <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>{order.grand_total}</td>
@@ -114,6 +152,24 @@ const OrdersPage = () => {
                                     }}
                                 >
                                     {loadingAction === order.id ? '...' : 'Expédier'}
+=======
+                            <td>{order.increment_id}</td>
+                            <td>{order.customer_full_name}</td>
+                            <td>{order.grand_total}</td>
+                            <td>{order.status}</td>
+                            <td>
+                                <button
+                                    onClick={() => handleCreateInvoice(order.id)}
+                                >
+                                    Payé
+                                </button>
+
+                                <button
+                                    onClick={() => handleCreateShipment(order.id)}
+                                    style={{ marginLeft: "10px" }}
+                                >
+                                    Expédier
+>>>>>>> origin/eval1.0
                                 </button>
                             </td>
                         </tr>
