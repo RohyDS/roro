@@ -4,6 +4,7 @@ import ProductImport from '../../service/Admin/import/ProductImport.js';
 import CustomerImport from '../../service/Admin/import/CustomerImport.js';
 import OrderImport from '../../service/Admin/import/OrderImport.js';
 import ImportImage from '../../service/Admin/import/ImportImage.js';
+import ImportServiceValider from '../../service/Admin/import/ImportServiceValider.js';
 import api from '../../config/api.js';
 import { 
     ArrowLeft, 
@@ -37,6 +38,7 @@ const UnifiedImporter = () => {
     const [customerReport, setCustomerReport] = useState(null);
     const [orderReport, setOrderReport] = useState(null);
     const [imageZipReport, setImageZipReport] = useState(null);
+    const [orderValidationErrors, setOrderValidationErrors] = useState([]);
 
     const handleProductFileChange = (e) => {
         if (e.target.files[0]) {
@@ -54,8 +56,20 @@ const UnifiedImporter = () => {
 
     const handleOrderFileChange = (e) => {
         if (e.target.files[0]) {
-            setOrderFile(e.target.files[0]);
+            const file = e.target.files[0];
+            setOrderFile(file);
             setOrderReport(null);
+            setOrderValidationErrors([]);
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target.result;
+                const validation = ImportServiceValider.validateOrderCSV(text);
+                if (!validation.isValid) {
+                    setOrderValidationErrors(validation.errors);
+                }
+            };
+            reader.readAsText(file);
         }
     };
 
@@ -343,6 +357,18 @@ const UnifiedImporter = () => {
                                 Sélectionner
                             </label>
                         </div>
+                        {orderValidationErrors.length > 0 && (
+                            <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px' }}>
+                                <h4 style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <AlertCircle size={14} /> Erreurs de validation
+                                </h4>
+                                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#b91c1c' }}>
+                                    {orderValidationErrors.map((err, idx) => (
+                                        <li key={idx} style={{ marginBottom: '4px', wordBreak: 'break-word' }}>{err}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     {/* INPUT 4: ZIP Images */}

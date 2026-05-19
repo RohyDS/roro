@@ -16,7 +16,7 @@ const DashboardService = {
             } catch (err) {
                 console.error("Impossible de récupérer les commandes.", err);
                 throw err;
-            }
+            } 
         }
 
         // Assurons-nous que c'est un tableau

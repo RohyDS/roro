@@ -5,8 +5,8 @@ import { Lock, LogIn } from 'lucide-react';
 import '../../styles/pages/Form.css';
 
 const Login = () => {
-    const [email, setEmail] = useState('admin@gmail.com');
-    const [password, setPassword] = useState('admin@gmail.com');
+    const [email, setEmail] = useState('admin@example.com');
+    const [password, setPassword] = useState('admin123');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { loginAdmin } = useAuth();
