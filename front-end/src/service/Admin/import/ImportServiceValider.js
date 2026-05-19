@@ -57,9 +57,16 @@ const ImportServiceValider = {
         const expectedHeaders = ['date', 'heure', 'client', 'achat', 'status'];
         const headers = parseLine(rawLines[0]).map(h => h.toLowerCase().trim());
         
-        const isHeadersValid = expectedHeaders.length === headers.length && expectedHeaders.every(h => headers.includes(h));
-        if (!isHeadersValid) {
-            errors.push(`Nom de colonne non conforme. Attendu : ${expectedHeaders.join(', ')}`);
+        const invalidHeaders = headers.filter(h => !expectedHeaders.includes(h));
+        const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+
+        if (invalidHeaders.length > 0 || missingHeaders.length > 0) {
+            if (invalidHeaders.length > 0) {
+                errors.push(`Nom de colonne non existante dans l'import : ${invalidHeaders.join(', ')}`);
+            }
+            if (missingHeaders.length > 0) {
+                errors.push(`Nom de colonne manquant : ${missingHeaders.join(', ')}`);
+            }
             return { isValid: false, errors }; // Arrêt si les colonnes sont mauvaises
         }
 
