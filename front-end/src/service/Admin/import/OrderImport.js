@@ -338,7 +338,9 @@ const importOrderRow = async (row) => {
                 items.forEach(item => {
                     const qty = item.qty_to_invoice || item.qty_ordered || 1;
                     invoiceItems[item.id] = qty;
-                    shipmentItems[item.id] = qty;
+                    shipmentItems[item.id] = {
+                        "1": qty
+                    };
                 });
                 
                 // 1. Facturer la commande
@@ -357,7 +359,7 @@ const importOrderRow = async (row) => {
                         shipment: {
                             carrier_title: "Livraison Standard Importée",
                             track_number: "TRK-" + orderId,
-                            source: "default",
+                            source: 1,
                             items: shipmentItems
                         }
                     });
