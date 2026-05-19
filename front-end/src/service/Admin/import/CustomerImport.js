@@ -61,6 +61,18 @@ const parseCSV = (text) => {
     return rows;
 };
 
+// Cache des clients (email -> true)
+const customerCache = {};
+
+/**
+ * Réinitialise le cache des clients.
+ */
+const clearCustomerCache = () => {
+    for (const key in customerCache) {
+        delete customerCache[key];
+    }
+};
+
 // ─── IMPORTATION D'UN CLIENT ───────────────────────────────────────────────────
 
 /**
@@ -70,12 +82,17 @@ const parseCSV = (text) => {
 const importCustomerRow = async (row) => {
     const lastName = row.nom?.trim();
     const firstName = row.prenom?.trim();
-    const email = row.email?.trim();
+    const email = row.email?.trim()?.toLowerCase();
     const password = row.pwd?.trim();
 
     if (!email) {
         console.warn(`%c  [Client Ligne ${row._lineNumber}] ⚠️ Email manquant → ignoré.`, 'color:orange');
         return { success: false, reason: 'Email manquant' };
+    }
+
+    if (customerCache[email]) {
+        console.log(`%c  [Client] ✓ Cache : <${email}> déjà enregistré / vérifié.`, 'color:#6366f1');
+        return { success: true, duplicate: true };
     }
 
     if (!firstName || !lastName) {
@@ -99,6 +116,7 @@ const importCustomerRow = async (row) => {
     try {
         const res = await api.post('v1/customer/register', payload);
         console.log(`%c  [Client] ✅ Créé avec succès !`, 'color:#10b981; font-weight:bold;');
+        customerCache[email] = true;
         return { success: true, created: true };
     } catch (error) {
         const status = error.response?.status;
@@ -108,6 +126,7 @@ const importCustomerRow = async (row) => {
         // Si l'adresse e-mail est déjà prise
         if (status === 422 || message.includes('already taken') || message.includes('déjà pris')) {
             console.log(`%c  [Client] ⚠️ Déjà enregistré / Email déjà pris : ${email}`, 'color:#f59e0b');
+            customerCache[email] = true;
             return { success: true, duplicate: true };
         }
 
@@ -122,5 +141,6 @@ const importCustomerRow = async (row) => {
 
 export default {
     parseCSV,
-    importCustomerRow
+    importCustomerRow,
+    clearCustomerCache
 };
