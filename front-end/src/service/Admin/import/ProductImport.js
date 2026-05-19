@@ -12,6 +12,9 @@ import api from '../../../config/api.js';
 // ─── Cache catégories slug → id ───────────────────────────────────────────────
 const categoryCache = {};
 
+// ─── Cache SKUs sku → id ──────────────────────────────────────────────────────
+const skuCache = {};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. PARSER CSV
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -90,6 +93,47 @@ const loadExistingCategories = async () => {
         console.log(`%c[Catégories] ✅ ${list.length} catégorie(s) en cache.`, 'color:#10b981');
     } catch (e) {
         console.warn('%c[Catégories] ⚠️ Pré-chargement impossible.', 'color:orange', e.message);
+    }
+};
+
+/**
+ * Charge tous les produits pour alimenter le cache SKU -> ID.
+ */
+const loadExistingProducts = async () => {
+    for (const key in skuCache) {
+        delete skuCache[key];
+    }
+    try {
+        let page = 1;
+        let hasMore = true;
+        let count = 0;
+        
+        while (hasMore && page <= 5) {
+            const res = await api.get('v1/admin/catalog/products', {
+                params: { page, limit: 100 }
+            });
+            const raw = res.data?.data?.data || res.data?.data || res.data || [];
+            const list = Array.isArray(raw) ? raw : [];
+            
+            list.forEach(p => {
+                if (p.sku && p.id) {
+                    skuCache[p.sku] = p.id;
+                    count++;
+                }
+            });
+            
+            const meta = res.data?.meta || res.data?.data?.meta;
+            const lastPage = meta?.last_page || meta?.lastPage;
+            if (lastPage) {
+                hasMore = page < lastPage;
+            } else {
+                hasMore = list.length === 100;
+            }
+            page++;
+        }
+        console.log(`%c[SKUs] ✅ ${count} produit(s) pré-chargé(s) en cache.`, 'color:#10b981');
+    } catch (e) {
+        console.warn('%c[SKUs] ⚠️ Pré-chargement impossible.', 'color:orange', e.message);
     }
 };
 
@@ -211,20 +255,30 @@ const createCategory = async (name) => {
  * On récupère la liste paginée et on filtre côté JS.
  */
 const getProductIdBySku = async (sku) => {
-    console.log(`%c  [SKU] Recherche de l'ID pour "${sku}"...`, 'color:#8b5cf6');
+    if (skuCache[sku]) {
+        console.log(`%c  [SKU] ✓ Cache : "${sku}" → ID ${skuCache[sku]}`, 'color:#6366f1');
+        return skuCache[sku];
+    }
+
+    console.log(`%c  [SKU] Recherche de l'ID pour "${sku}"... (Non présent en cache)`, 'color:#8b5cf6');
     try {
         // On passe le SKU comme filtre simple — Bagisto l'accepte en query string directe
         const res = await api.get('v1/admin/catalog/products', {
-            params: { limit: 50 }  // ← PAS de params sku ici, on filtre côté JS
+            params: { limit: 100 }
         });
 
         const raw  = res.data?.data?.data || res.data?.data || res.data || [];
         const list = Array.isArray(raw) ? raw : [];
-        const found = list.find(p => p.sku === sku);
+        
+        list.forEach(p => {
+            if (p.sku && p.id) {
+                skuCache[p.sku] = p.id;
+            }
+        });
 
-        if (found) {
-            console.log(`%c  [SKU] ✅ Trouvé → ID ${found.id}`, 'color:#10b981');
-            return found.id;
+        if (skuCache[sku]) {
+            console.log(`%c  [SKU] ✅ Trouvé → ID ${skuCache[sku]}`, 'color:#10b981');
+            return skuCache[sku];
         }
 
         console.warn(`%c  [SKU] ⚠️ SKU "${sku}" introuvable dans la liste.`, 'color:orange');
@@ -250,6 +304,7 @@ const createProductSkeleton = async (sku, type = 'simple') => {
         const product = res.data?.data || res.data;
         if (product?.id) {
             console.log(`%c  [Produit] ✅ Créé → ID ${product.id}`, 'color:#10b981');
+            skuCache[sku] = product.id; // Mettre en cache
             return product.id;
         }
 
@@ -367,6 +422,7 @@ const ProductImport = {
     parseCSV,
     importRow,
     loadExistingCategories,
+    loadExistingProducts,
     findOrCreateCategory,
     createProductSkeleton,
     updateProduct,

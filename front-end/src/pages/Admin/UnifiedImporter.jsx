@@ -92,6 +92,16 @@ const UnifiedImporter = () => {
         setOrderReport(null);
         setImageZipReport(null);
 
+        // Pré-charger et réinitialiser les caches locaux au début
+        CustomerImport.clearCustomerCache();
+        OrderImport.clearOrderImportCache();
+        try {
+            await ProductImport.loadExistingCategories();
+            await ProductImport.loadExistingProducts();
+        } catch (preloadErr) {
+            console.warn("Erreur lors du pré-chargement des données de cache :", preloadErr.message);
+        }
+
         // 1. IMPORTATION DES PRODUITS (si fichier sélectionné)
         if (productFile) {
             setCurrentStep('products');
@@ -100,9 +110,6 @@ const UnifiedImporter = () => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
-                        // Rafraîchir les catégories pour vider le cache obsolète
-                        await ProductImport.loadExistingCategories();
-
                         const text = e.target.result;
                         const rows = ProductImport.parseCSV(text);
                         console.log(`%c[Système] ${rows.length} produits trouvés.`, "color: #a855f7");
