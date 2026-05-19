@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SettingService from '../../service/Admin/SettingService';
 import { Settings as SettingsIcon, RefreshCw, CheckCircle2, AlertCircle, Info, Trash2 } from 'lucide-react';
 
 const Settings = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const [results, setResults] = useState(null);
@@ -28,8 +30,13 @@ const Settings = () => {
 
         try {
             const response = await SettingService.reset(models.map(m => m.id));
-            setMessage({ type: 'success', text: response.message });
+            setMessage({ type: 'success', text: response.message + " Redirection vers la page de connexion..." });
             setResults(response.details);
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('customer_token');
+            setTimeout(() => {
+                navigate('/admin/login');
+            }, 2000);
         } catch (error) {
             setMessage({ type: 'error', text: "Une erreur est survenue lors de la réinitialisation." });
         } finally {
@@ -45,8 +52,13 @@ const Settings = () => {
 
         try {
             const response = await SettingService.reset([modelId]);
-            setMessage({ type: 'success', text: response.message });
+            setMessage({ type: 'success', text: response.message + " Redirection vers la page de connexion..." });
             setResults(response.details);
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('customer_token');
+            setTimeout(() => {
+                navigate('/admin/login');
+            }, 2000);
         } catch (error) {
             setMessage({ type: 'error', text: "Erreur lors de la suppression." });
         } finally {

@@ -112,7 +112,23 @@ const parseAchat = (achatStr) => {
 
 // ─── AUTHENTIFICATION CLIENT EN DIRECT ─────────────────────────────────────────
 
+const loginTokens = {};
+
+const clearOrderImportCache = () => {
+    for (const key in loginTokens) {
+        delete loginTokens[key];
+    }
+};
+
 const loginCustomer = async (email, password = '1234567890') => {
+    const key = email.toLowerCase().trim();
+    if (loginTokens[key]) {
+        console.log(`%c  [Client] ✓ Cache : déjà connecté / Token récupéré pour <${email}>`, 'color:#6366f1');
+        api.defaults.headers.common['Authorization'] = `Bearer ${loginTokens[key]}`;
+        localStorage.setItem('customer_token', loginTokens[key]);
+        return loginTokens[key];
+    }
+
     try {
         const response = await api.post('v1/customer/login', {
             email: email,
@@ -120,9 +136,11 @@ const loginCustomer = async (email, password = '1234567890') => {
             device_name: 'React Admin Importer'
         });
         if (response.data && response.data.token) {
-            api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-            localStorage.setItem('customer_token', response.data.token);
-            return response.data.token;
+            const token = response.data.token;
+            loginTokens[key] = token;
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            localStorage.setItem('customer_token', token);
+            return token;
         }
         throw new Error("Identifiants incorrects ou réponse API incomplète");
     } catch (error) {
@@ -320,7 +338,9 @@ const importOrderRow = async (row) => {
                 items.forEach(item => {
                     const qty = item.qty_to_invoice || item.qty_ordered || 1;
                     invoiceItems[item.id] = qty;
-                    shipmentItems[item.id] = qty;
+                    shipmentItems[item.id] = {
+                        "1": qty
+                    };
                 });
                 
                 // 1. Facturer la commande
@@ -339,6 +359,7 @@ const importOrderRow = async (row) => {
                         shipment: {
                             carrier_title: "Livraison Standard Importée",
                             track_number: "TRK-" + orderId,
+                            source: 1,
                             items: shipmentItems
                         }
                     });
@@ -359,5 +380,6 @@ const importOrderRow = async (row) => {
 
 export default {
     parseCSV,
-    importOrderRow
+    importOrderRow,
+    clearOrderImportCache
 };
