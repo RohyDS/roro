@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getOrders } from "../../service/Admin/OrderService";
+import {getOrders, createInvoice, createShipment} from "../../service/Admin/orderService";
 
 const OrdersPage = () => {
     const [orders, setOrders] = useState([]);
@@ -17,17 +17,36 @@ const OrdersPage = () => {
         }
     };
 
+    const handleCreateInvoice = async (orderId) => {
+        try {
+            await createInvoice(orderId);
+            fetchOrders();
+        } catch (error) {
+            console.error("Erreur facture :", error);
+        }
+    };
+
+    const handleCreateShipment = async (orderId) => {
+        try {
+            await createShipment(orderId);
+            fetchOrders();
+        } catch (error) {
+            console.error("Erreur expédition :", error);
+        }
+    };
+
     return (
         <div>
             <h2>Liste des commandes</h2>
 
-            <table>
+            <table border="1" cellPadding="10">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Client</th>
                         <th>Total</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
 
@@ -38,6 +57,20 @@ const OrdersPage = () => {
                             <td>{order.customer_full_name}</td>
                             <td>{order.grand_total}</td>
                             <td>{order.status}</td>
+                            <td>
+                                <button
+                                    onClick={() => handleCreateInvoice(order.id)}
+                                >
+                                    Payé
+                                </button>
+
+                                <button
+                                    onClick={() => handleCreateShipment(order.id)}
+                                    style={{ marginLeft: "10px" }}
+                                >
+                                    Expédier
+                                </button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
@@ -46,4 +79,4 @@ const OrdersPage = () => {
     );
 };
 
-export default Orders;
+export default OrdersPage;
