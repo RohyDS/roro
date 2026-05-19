@@ -1,0 +1,37 @@
+{
+  "data": {
+    "id": 3,
+    "sku": "sk-s",
+    "type": "simple",
+    "name": "Samsung Galaxy S26",
+    "url_key": "samsung-galaxy-s26",
+    "price": "350.0000",
+    "formatted_price": "350,00 €",
+    "short_description": "Samsung Galaxy S26",
+    "description": "Samsung Galaxy S26",
+    "images": [],
+    "videos": [],
+    "base_image": {
+      "small_image_url": "http://127.0.0.1:8000/themes/shop/default/build/assets/small-product-placeholder-CMT26fOX.webp",
+      "medium_image_url": "http://127.0.0.1:8000/themes/shop/default/build/assets/medium-product-placeholder-INODB-G2.webp",
+      "large_image_url": "http://127.0.0.1:8000/themes/shop/default/build/assets/large-product-placeholder-B9xoAuKQ.webp",
+      "original_image_url": "http://127.0.0.1:8000/themes/shop/default/build/assets/large-product-placeholder-B9xoAuKQ.webp"
+    },
+    "created_at": "2026-05-19T10:31:37.000000Z",
+    "updated_at": "2026-05-19T10:31:37.000000Z",
+    "reviews": {
+      "total": 0,
+      "total_rating": 0,
+      "average_rating": 0,
+      "percentage": []
+    },
+    "in_stock": true,
+    "is_saved": false,
+    "is_item_in_cart": null,
+    "show_quantity_changer": true,
+    "special_price": "350.0000",
+    "formatted_special_price": "350,00 €",
+    "regular_price": "466.0000",
+    "formatted_regular_price": "466,00 €"
+  }
+}

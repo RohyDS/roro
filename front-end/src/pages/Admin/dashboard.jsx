@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import DashboardService from '../../service/Admin/Dasboard';
-import { FolderTree, Rocket, Settings, LogOut, ShoppingBag } from 'lucide-react';
+import { FolderTree, Rocket, Settings, LogOut, ShoppingBag, Package } from 'lucide-react';
 
 const Dashboard = () => {
     const { logout } = useAuth();
@@ -61,6 +61,12 @@ const Dashboard = () => {
                     }}
                     >
                     <ShoppingBag size={18} /> Commandes
+                    </Link>
+                    <Link 
+                        to="/admin/stock"
+                        style={{ background: '#f59e0b', color: 'white', textDecoration: 'none', padding: '10px 20px', borderRadius: '6px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                        <Package size={18} /> Stock
                     </Link>
                     <Link 
                         to="/admin/importer"

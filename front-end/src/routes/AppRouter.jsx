@@ -16,7 +16,8 @@ import Categories from '../pages/Admin/Categories';
 import Settings from '../pages/Admin/Settings';
 import UnifiedImporter from '../pages/Admin/UnifiedImporter';
 import ProtectedRoute from '../composents/ProtectedRoute';
-import OrdersPage from '../pages/Admin/OrdersPage';
+import OrdersPage  from '../pages/Admin/OrdersPage';
+import StockPage from '../pages/Admin/StockPage';
 
 const AppRouter = () => {
     return (
@@ -50,6 +51,7 @@ const AppRouter = () => {
                 <Route path="importer" element={<UnifiedImporter />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="orders" element={<OrdersPage />} />
+                <Route path="stock" element={<StockPage />} />
             </Route>
         </Routes>
     );

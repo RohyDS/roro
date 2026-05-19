@@ -26,7 +26,7 @@ const ProductDetail = () => {
                 const data = await ProductService.getProductById(productId);
                 
                 if (data) {
-                    setProduct(data);
+                    setProduct(data); 
                 } else {
                     setError("Produit non trouvé.");
                 }
@@ -43,9 +43,19 @@ const ProductDetail = () => {
         }
     }, [productId]);
 
+    const getAvailableStock = (productData) => {
+        if (!productData) return 0;
+        if (productData.inventories && productData.inventories.length > 0) {
+            return productData.inventories.reduce((total, inv) => total + (parseInt(inv.qty) || 0), 0);
+        }
+        // Fallback for Front-Office API which might not expose 'inventories' array
+        return productData.in_stock ? null : 0; // null means 'in stock, but exact qty unknown'
+    };
+
     const handleQuantityChange = (e) => {
         const val = parseInt(e.target.value);
-        if (val > 0) setQuantity(val);
+        const maxStock = getAvailableStock(product);
+        if (val > 0 && (maxStock === null || maxStock === 0 || val <= maxStock)) setQuantity(val);
     };
 
     const handleAddToCart = () => {
@@ -114,6 +124,20 @@ const ProductDetail = () => {
                         </span>
                     </div>
 
+                    <div className="product-stock-section" style={{ margin: '15px 0', fontSize: '1rem' }}>
+                        {getAvailableStock(product) !== 0 ? (
+                            <span style={{ color: '#16a34a', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a', display: 'inline-block' }}></span>
+                                {getAvailableStock(product) !== null ? `En stock : ${getAvailableStock(product)} disponible(s)` : 'En stock'}
+                            </span>
+                        ) : (
+                            <span style={{ color: '#dc2626', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#dc2626', display: 'inline-block' }}></span>
+                                Rupture de stock
+                            </span>
+                        )}
+                    </div>
+
                     {product.description && (
                         <div className="product-description" dangerouslySetInnerHTML={{ __html: product.description }} />
                     )}
@@ -131,15 +155,32 @@ const ProductDetail = () => {
                                     value={quantity} 
                                     onChange={handleQuantityChange}
                                     min="1"
+                                    max={getAvailableStock(product) !== null && getAvailableStock(product) > 0 ? getAvailableStock(product) : undefined}
                                 />
-                                <button onClick={() => setQuantity(q => q + 1)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <button 
+                                    onClick={() => setQuantity(q => (getAvailableStock(product) === null || (getAvailableStock(product) !== 0 && q < getAvailableStock(product))) ? q + 1 : q)} 
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
                                     <Plus size={16} />
                                 </button>
                             </div>
                         </div>
 
-                        <button className="btn-add-cart-large" onClick={handleAddToCart} style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
-                            <ShoppingCart size={20} /> Ajouter au panier
+                        <button 
+                            className="btn-add-cart-large" 
+                            onClick={handleAddToCart} 
+                            disabled={getAvailableStock(product) === 0}
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '10px', 
+                                justifyContent: 'center',
+                                opacity: getAvailableStock(product) === 0 ? 0.5 : 1,
+                                cursor: getAvailableStock(product) === 0 ? 'not-allowed' : 'pointer'
+                            }}
+                        >
+                            <ShoppingCart size={20} /> 
+                            {getAvailableStock(product) === 0 ? "Indisponible" : "Ajouter au panier"}
                         </button>
 
                         <button 
