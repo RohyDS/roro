@@ -1,11 +1,11 @@
 type,sku,name,Categorie,prix_vente,prix_achat,prix_promo,stock_initial
-simple,sk-lenovo,Laptop Lenovo IdeaPad 5,Ordinateur,600,500,520,10
-simple,sk-mac,MacBook Air M5,Ordinateur,768,555,,5
-simple,sk-samsung,Samsung Galaxy S26,Telephone,466,300,350,2
-simple,sk-dell,Dell XPS 15,Ordinateur,1299,1100,1199,8
-simple,sk-iphone,iPhone 17 Pro,Telephone,999,800,,15
-simple,sk-huawei,Huawei P70,Telephone,699,550,649,3
-simple,sk-ipad,iPad Air 6,Tablette,549,450,499,7
-simple,sk-galaxy-tab,Samsung Tab S9,Tablette,799,650,,4
-simple,sk-logitech,Souris Logitech MX,Accessoire,89,60,75,20
-simple,sk-ecran,Ecran Dell U2723QE,Accessoire,649,500,599,6
+simple,sk-lenovo,Laptop Lenovo IdeaPad 5,Ordinateur,600,500,520,200
+simple,sk-mac,MacBook Air M5,Ordinateur,768,555,,500
+simple,sk-samsung,Samsung Galaxy S26,Telephone,466,300,350,200
+simple,sk-dell,Dell XPS 15,Ordinateur,1299,1100,1199,800
+simple,sk-iphone,iPhone 17 Pro,Telephone,999,800,,1500
+simple,sk-huawei,Huawei P70,Telephone,699,550,649,300
+simple,sk-ipad,iPad Air 6,Tablette,549,450,499,700
+simple,sk-galaxy-tab,Samsung Tab S9,Tablette,799,650,,400
+simple,sk-logitech,Souris Logitech MX,Accessoire,89,60,75,200
+simple,sk-ecran,Ecran Dell U2723QE,Accessoire,649,500,599,600
