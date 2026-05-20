@@ -4,8 +4,9 @@ import { getProducts, updateProductInventory } from "../../service/Admin/Product
 const StockPage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
-    const [stockToAdd, setStockToAdd] = useState({});
+    const [rows, setRows] = useState([{ productId: '', qty: 5 }]);
 
     useEffect(() => {
         fetchProducts();
@@ -17,161 +18,240 @@ const StockPage = () => {
             const data = await getProducts();
             setProducts(data.data || []);
         } catch (error) {
-            console.error("Erreur :", error);
+            console.error("Erreur lors du chargement des produits :", error);
             setMessage({ text: "Erreur lors du chargement des produits", type: "error" });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleStockChange = (productId, value) => {
-        setStockToAdd({
-            ...stockToAdd,
-            [productId]: value
-        });
+    const handleAddRow = () => {
+        setRows([...rows, { productId: '', qty: 5 }]);
     };
 
-    const handleAddStock = async (product) => {
-        const addedStock = parseInt(stockToAdd[product.id] || 0);
-        if (addedStock <= 0 || isNaN(addedStock)) {
-            setMessage({ text: "Veuillez entrer une quantité valide à ajouter.", type: "error" });
+    const handleRemoveRow = (index) => {
+        if (rows.length === 1) {
+            setRows([{ productId: '', qty: 5 }]);
+            return;
+        }
+        const newRows = [...rows];
+        newRows.splice(index, 1);
+        setRows(newRows);
+    };
+
+    const handleRowChange = (index, field, value) => {
+        const newRows = [...rows];
+        newRows[index][field] = value;
+        setRows(newRows);
+    };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setMessage({ text: '', type: '' });
+
+        // Filter valid rows (where a product has been selected)
+        const validRows = rows.filter(row => row.productId !== '');
+        if (validRows.length === 0) {
+            setMessage({ text: "Veuillez choisir au moins un produit.", type: "error" });
             return;
         }
 
-        try {
-            // Find current stock. If the user exposed 'inventories' via $with, we try to use it.
-            // Also need inventory_source_id, default to 1 if not found.
-            let currentStock = 0;
-            let sourceId = 1;
+        // Validate quantities
+        for (const row of validRows) {
+            const qty = parseInt(row.qty);
+            if (isNaN(qty) || qty < 1 || qty > 5) {
+                setMessage({ text: "La quantité de chaque produit doit être entre 1 et 5.", type: "error" });
+                return;
+            }
+        }
 
-            if (product.inventories && product.inventories.length > 0) {
-                currentStock = product.inventories[0].qty || 0;
-                sourceId = product.inventories[0].inventory_source_id || 1;
+        setSaving(true);
+        let successCount = 0;
+        let errors = [];
+
+        for (const row of validRows) {
+            const product = products.find(p => p.id === parseInt(row.productId));
+            if (!product) {
+                errors.push(`Produit ID ${row.productId} non trouvé.`);
+                continue;
             }
 
-            const newTotalStock = parseInt(currentStock) + addedStock;
+            try {
+                let currentStock = 0;
+                let sourceId = 1;
 
-            // Prepare the payload by extracting only primitive attributes 
-            // to avoid SQL errors from nested relational data (like inventory_sources, images, etc.)
-            const payload = {};
-            for (const key in product) {
-                if (product[key] !== null && typeof product[key] !== 'object') {
-                    payload[key] = product[key];
+                if (product.inventories && product.inventories.length > 0) {
+                    currentStock = product.inventories[0].qty || 0;
+                    sourceId = product.inventories[0].inventory_source_id || 1;
                 }
+
+                const addedStock = parseInt(row.qty);
+                const newTotalStock = parseInt(currentStock) + addedStock;
+
+                // Prepare payload
+                const payload = {};
+                for (const key in product) {
+                    if (product[key] !== null && typeof product[key] !== 'object') {
+                        payload[key] = product[key];
+                    }
+                }
+
+                payload.channel = product.channel || 'default';
+                payload.locale = product.locale || 'fr';
+                payload.inventories = {
+                    [sourceId]: newTotalStock
+                };
+
+                if (product.categories && Array.isArray(product.categories)) {
+                    payload.categories = product.categories.map(c => c.id || c);
+                }
+
+                await updateProductInventory(product.id, payload);
+                successCount++;
+            } catch (error) {
+                console.error(`Erreur lors de l'enregistrement du stock pour le produit ${product.name || product.id} :`, error);
+                errors.push(`${product.name || product.id}`);
             }
+        }
 
-            // Manually add the required fields and correctly formatted relations
-            payload.channel = product.channel || 'default';
-            payload.locale = product.locale || 'fr';
-            payload.inventories = {
-                [sourceId]: newTotalStock
-            };
-            
-            if (product.categories && Array.isArray(product.categories)) {
-                payload.categories = product.categories.map(c => c.id || c);
-            }
+        setSaving(false);
 
-            await updateProductInventory(product.id, payload);
-
-            setMessage({ text: `Stock ajouté avec succès pour le produit ${product.name || product.id}.`, type: "success" });
-            setStockToAdd({ ...stockToAdd, [product.id]: '' });
+        if (errors.length > 0) {
+            setMessage({
+                text: `${successCount} produit(s) mis à jour. Échec pour : ${errors.join(', ')}`,
+                type: "error"
+            });
+        } else {
+            setMessage({
+                text: `Succès : ${successCount} produit(s) mis à jour.`,
+                type: "success"
+            });
+            // Reset to a single empty row
+            setRows([{ productId: '', qty: 5 }]);
+            // Refresh local products list to show new stock numbers if needed
             fetchProducts();
-        } catch (error) {
-            setMessage({ text: `Erreur lors de l'ajout de stock pour le produit ${product.id}.`, type: "error" });
         }
     };
 
-    const calculateTotalStock = (product) => {
-        if (!product.inventories || product.inventories.length === 0) return 0;
-        return product.inventories.reduce((total, inv) => total + (parseInt(inv.qty) || 0), 0);
-    };
-
     return (
-        <div style={{ padding: '20px' }}>
-            <h2 style={{ marginBottom: '20px' }}>Gestion des Stocks</h2>
+        <div>
+            <h1>
+                Saisie Multiple de Stock
+            </h1>
 
             {message.text && (
-                <div style={{
-                    padding: '10px',
-                    marginBottom: '15px',
-                    borderRadius: '5px',
-                    backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
-                    color: message.type === 'success' ? '#166534' : '#991b1b'
-                }}>
+                <div>
                     {message.text}
                 </div>
             )}
 
-            {loading ? (
+            {loading && products.length === 0 ? (
                 <p>Chargement des produits...</p>
             ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '8px', overflow: 'hidden' }}>
-                    <thead style={{ background: '#f9fafb' }}>
-                        <tr>
-                            <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>ID</th>
-                            <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>SKU / Nom</th>
-                            <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>Stock Actuel</th>
-                            <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>Ajouter au Stock</th>
-                            <th style={{ padding: '15px', textAlign: 'left', borderBottom: '1px solid #eee' }}>Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {products.map((product) => (
-                            <tr key={product.id}>
-                                <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>{product.id}</td>
-                                <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-                                    <strong>{product.sku}</strong><br />
-                                    {product.name}
-                                </td>
-                                <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-                                    <span style={{ 
-                                        background: '#e0e7ff', 
-                                        color: '#3730a3', 
-                                        padding: '4px 10px', 
-                                        borderRadius: '12px', 
-                                        fontWeight: 'bold' 
-                                    }}>
-                                        {calculateTotalStock(product)}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-                                    <input 
-                                        type="number" 
-                                        min="1"
-                                        placeholder="Quantité"
-                                        value={stockToAdd[product.id] || ''}
-                                        onChange={(e) => handleStockChange(product.id, e.target.value)}
-                                        style={{
-                                            padding: '8px',
-                                            borderRadius: '4px',
-                                            border: '1px solid #d1d5db',
-                                            width: '100px'
-                                        }}
-                                    />
-                                </td>
-                                <td style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-                                    <button 
-                                        onClick={() => handleAddStock(product)}
-                                        style={{
-                                            padding: '8px 15px',
-                                            backgroundColor: '#4f46e5',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Ajouter
-                                    </button>
-                                </td>
+                <form onSubmit={handleSave}>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Quantité (Max 5)</th>
+                                <th>Action</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {rows.map((row, index) => (
+                                <tr key={index}>
+                                    <td>
+                                        <select
+                                            value={row.productId}
+                                            onChange={(e) => handleRowChange(index, "productId", e.target.value)}
+                                            required
+                                        >
+                                            <option value="">-- Choisir un produit --</option>
+                                            {products.map(p => {
+                                                // Find current stock if available
+                                                const qty = p.inventories && p.inventories[0] ? p.inventories[0].qty : 0;
+                                                return (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.sku} - {p.name} (Stock actuel: {qty})
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="5"
+                                            value={row.qty}
+                                            onChange={(e) => handleRowChange(index, "qty", parseInt(e.target.value) || "")}
+                                            required
+                                        />
+                                    </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveRow(index)}
+                                        >
+                                            Supprimer
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                    <div>
+                        <button
+                            type="button"
+                            onClick={handleAddRow}
+                        >
+                            + Ajouter un produit
+                        </button>
+
+                        <button
+                            type="submit"
+                            disabled={saving}
+                        >
+                            {saving ? "Enregistrement..." : "Enregistrer"}
+                        </button>
+                    </div>
+                </form>
             )}
+
+            <div>
+                <h3>Stock actuel en base :</h3>
+                {products.length === 0 ? (
+                    <p>Aucun produit disponible.</p>
+                ) : (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>SKU</th>
+                                <th>Nom</th>
+                                <th>Quantité</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products.map(p => {
+                                const qty = p.inventories && p.inventories[0] ? p.inventories[0].qty : 0;
+                                return (
+                                    <tr key={p.id}>
+                                        <td>{p.id}</td>
+                                        <td>{p.sku}</td>
+                                        <td>{p.name}</td>
+                                        <td>{qty}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                )}
+            </div>
         </div>
     );
 };
 
 export default StockPage;
+
